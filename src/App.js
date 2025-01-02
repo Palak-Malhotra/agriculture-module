@@ -23,7 +23,7 @@ function App() {
       {generateStars()} {/* Render the stars */}
       <header className="App-header">
         <h1>Agriculture Tool</h1>
-        <p>Enter details below to predict crop yield:</p>
+        <p>Enter your location below to predict the crop yield:</p>
         <PredictionForm /> {/* Render the PredictionForm component */}
       </header>
     </div>

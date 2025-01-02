@@ -1,156 +1,131 @@
 import React, { useState } from "react";
 
-const regionalDefaults = {
-  Punjab: { ndvi: 0.75, rainfall: 300, soil_pH: 6.5 },
-  Haryana: { ndvi: 0.7, rainfall: 250, soil_pH: 6.8 },
-};
+function PredictionForm() {
+  const [location, setLocation] = useState("");
+  const [crop, setCrop] = useState("Rice");
+  const [predictedYield, setPredictedYield] = useState(null);
 
-const PredictionForm = () => {
-  const [inputs, setInputs] = useState({
-    crop: "",
-    region: "",
-    season: "",
-    ndvi: "",
-    rainfall: "",
-    soil_pH: "",
-  });
-  const [result, setResult] = useState(null);
-
-  const handleRegionChange = (e) => {
-    const selectedRegion = e.target.value;
-    const defaults = regionalDefaults[selectedRegion] || {};
-    setInputs({
-      ...inputs,
-      region: selectedRegion,
-      ndvi: defaults.ndvi || "",
-      rainfall: defaults.rainfall || "",
-      soil_pH: defaults.soil_pH || "",
-    });
+  const handleLocationChange = (e) => {
+    setLocation(e.target.value);
   };
 
-  const handleChange = (e) => {
-    setInputs({ ...inputs, [e.target.name]: e.target.value });
+  const handleCropChange = (e) => {
+    setCrop(e.target.value);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Placeholder API call (update with your actual API endpoint)
-    const response = await fetch("http://<your-api-url>/predict", {
+  const handlePredictClick = () => {
+    fetch("/api/predict", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(inputs),
-    });
-    const data = await response.json();
-    setResult(data.predicted_yield);
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ location, crop }), // Send location and crop to backend
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch prediction");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setPredictedYield(data.predicted_yield); // Update the frontend state with the Python response
+      })
+      .catch((error) => {
+        console.error("Error fetching prediction:", error);
+        alert("Failed to fetch prediction. Please try again.");
+      });
   };
 
   return (
-    <div className="form-container">
-      <form onSubmit={handleSubmit}>
-        {/* Row for Crop, Region, and Season */}
-        <div className="form-row">
-          <label>
-            Crop:
-            <select
-              name="crop"
-              value={inputs.crop}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select Crop</option>
-              <option value="Rice">Rice</option>
-              <option value="Wheat">Wheat</option>
-            </select>
-          </label>
-          <label>
-            Region:
-            <select
-              name="region"
-              value={inputs.region}
-              onChange={handleRegionChange}
-              required
-            >
-              <option value="">Select Region</option>
-              <option value="Punjab">Punjab</option>
-              <option value="Haryana">Haryana</option>
-            </select>
-          </label>
-          <label>
-            Season:
-            <select
-              name="season"
-              value={inputs.season}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select Season</option>
-              <option value="Kharif">Kharif</option>
-              <option value="Rabi">Rabi</option>
-            </select>
-          </label>
-        </div>
+    <div style={{ textAlign: "center", padding: "20px" }}>
+      <div style={{ marginBottom: "20px" }}>
+        <label>
+          <strong>Select Crop:</strong>
+          <select
+            value={crop}
+            onChange={handleCropChange}
+            style={{
+              display: "block",
+              width: "80%",
+              margin: "10px auto",
+              padding: "10px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+              fontSize: "16px",
+            }}
+          >
+            <option value="Rice">Rice</option>
+            <option value="Wheat" disabled>
+              Wheat (Coming Soon)
+            </option>
+          </select>
+        </label>
+      </div>
 
-        {/* Row for NDVI, Rainfall, and Soil pH */}
-        <div className="form-row">
-          <label>
-            NDVI:
-            <input
-              type="number"
-              name="ndvi"
-              placeholder="e.g., 0.75"
-              value={inputs.ndvi}
-              onChange={handleChange}
-              step="0.01"
-              required
-            />
-          </label>
-          <label>
-            Rainfall (mm):
-            <input
-              type="number"
-              name="rainfall"
-              placeholder="e.g., 300"
-              value={inputs.rainfall}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Soil pH:
-            <input
-              type="number"
-              name="soil_pH"
-              placeholder="e.g., 6.5"
-              value={inputs.soil_pH}
-              onChange={handleChange}
-              step="0.1"
-              required
-            />
-          </label>
-        </div>
+      <div style={{ marginBottom: "20px" }}>
+        <label>
+          <strong>Enter Location:</strong>
+          <input
+            type="text"
+            value={location}
+            onChange={handleLocationChange}
+            placeholder="e.g., Punjab, India"
+            style={{
+              display: "block",
+              width: "80%",
+              margin: "10px auto",
+              padding: "10px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+              fontSize: "16px",
+            }}
+          />
+        </label>
+      </div>
 
-        {/* File Upload */}
-        <div className="form-row">
-          <label>
-            Upload Soil Report (Optional):
-            <input type="file" name="soil_report" />
-          </label>
-        </div>
+      <button
+        onClick={handlePredictClick}
+        style={{
+          backgroundColor: "#4CAF50",
+          color: "white",
+          padding: "10px 20px",
+          border: "none",
+          borderRadius: "5px",
+          fontSize: "16px",
+          cursor: "pointer",
+        }}
+      >
+        Predict Yield
+      </button>
 
-        {/* Submit Button */}
-        <button type="submit">Predict Yield</button>
-      </form>
-
-      {/* Result Display */}
-      {result && (
-        <div className="result-container">
-          <h3>Predicted Yield:</h3>
-          <p>{result} kg/ha</p>
+      {predictedYield && (
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "15px",
+            border: "1px solid rgba(255, 255, 255, 0.5)", // Transparent border
+            borderRadius: "5px",
+            backgroundColor: "rgba(255, 255, 255, 0.2)", // Transparent background
+            backdropFilter: "blur(5px)", // Adds a blur effect
+            color: "#fff", // White text
+          }}
+        >
+          <h3 style={{ color: "#4CAF50", textShadow: "1px 1px 2px #000" }}>
+            Predicted Yield
+          </h3>
+          <p>
+            <strong>Crop:</strong> {crop}
+          </p>
+          <p>
+            <strong>Location:</strong> {location || "Unknown"}
+          </p>
+          <p>
+            <strong>Predicted Yield:</strong> {predictedYield} kg/ha
+          </p>
         </div>
       )}
     </div>
   );
-};
+}
 
 export default PredictionForm;
